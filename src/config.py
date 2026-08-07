@@ -1,57 +1,37 @@
 """
-Configuration file for RiftGroundAI
+RiftGroundAI Configuration File
+-------------------------------
+Store all reusable project settings here.
 """
 
-from pathlib import Path
+# Google Earth Engine Project
+PROJECT_NAME = "riftgroundai"
 
-# -----------------------------
-# Project Directories
-# -----------------------------
+# Analysis period
+START_YEAR = 2020
+END_YEAR = 2026
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+# Lakes (Longitude, Latitude)
+LAKES = {
+    "Baringo": [36.08, 0.63],
+    "Bogoria": [36.10, 0.26],
+    "Nakuru": [36.08, -0.30],
+    "Elementaita": [36.27, -0.46],
+    "Naivasha": [36.37, -0.77],
+    "Turkana": [36.10, 3.50],
+    "Magadi": [36.28, -1.90]
+}
 
-DATA_DIR = PROJECT_ROOT / "data"
-RAW_DATA_DIR = DATA_DIR / "raw"
-PROCESSED_DATA_DIR = DATA_DIR / "processed"
+# Sentinel-2 Settings
+DATASET = "COPERNICUS/S2_SR_HARMONIZED"
+MAX_CLOUD = 10
 
-OUTPUT_DIR = PROJECT_ROOT / "outputs"
-FIGURE_DIR = PROJECT_ROOT / "figures"
+# NDWI Bands
+GREEN_BAND = "B3"
+NIR_BAND = "B8"
 
-# Create directories automatically
-RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
-PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-FIGURE_DIR.mkdir(parents=True, exist_ok=True)
+# Buffer size around each lake (metres)
+BUFFER_SIZE = 5000
 
-# -----------------------------
-# Study Area
-# -----------------------------
-
-LAKES = [
-    "Lake Naivasha",
-    "Lake Nakuru",
-    "Lake Bogoria",
-    "Lake Baringo",
-    "Lake Elementaita"
-]
-
-# -----------------------------
-# Time Range
-# -----------------------------
-
-START_DATE = "2015-01-01"
-END_DATE = "2025-12-31"
-
-# -----------------------------
-# Satellite
-# -----------------------------
-
-SATELLITE = "COPERNICUS/S2_SR_HARMONIZED"
-
-# -----------------------------
-# Water Detection
-# -----------------------------
-
-NDWI_THRESHOLD = 0.2
-
-print("Configuration loaded successfully.")
+# Output folder
+DATA_FOLDER = "data"

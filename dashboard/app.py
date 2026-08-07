@@ -1,59 +1,156 @@
 import streamlit as st
-import ee
-import folium
-from streamlit_folium import st_folium
+import pandas as pd
+import matplotlib.pyplot as plt
+from pathlib import Path
 
-st.set_page_config(layout="wide")
+# -------------------------
+# Page Setup
+# -------------------------
+st.set_page_config(
+    page_title="RiftGroundAI",
+    page_icon="🌍",
+    layout="wide"
+)
 
 st.title("🌍 RiftGroundAI")
-st.subheader("NDWI Water Detection")
+st.subheader("AI-Powered Rift Valley Lake Monitoring & Forecasting")
 
-# Initialize Earth Engine
-ee.Initialize(project="riftgroundai")
+# -------------------------
+# Lakes
+# -------------------------
+lakes = [
+    "Baringo",
+    "Bogoria",
+    "Nakuru",
+    "Elementaita",
+    "Naivasha",
+    "Turkana",
+    "Magadi"
+]
 
-# Lake Naivasha
-lake = ee.Geometry.Point([36.36, -0.77])
+# -------------------------
+# Sidebar
+# -------------------------
+st.sidebar.title("Controls")
 
-# Sentinel-2 image
-image = (
-    ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
-    .filterBounds(lake)
-    .filterDate("2024-01-01", "2024-12-31")
-    .sort("CLOUDY_PIXEL_PERCENTAGE")
-    .first()
+selected_lake = st.sidebar.selectbox(
+    "Choose a Lake",
+    lakes
 )
 
-# Calculate NDWI
-ndwi = image.normalizedDifference(["B3", "B8"]).rename("NDWI")
+# -------------------------
+# Load Historical Data
+# -------------------------
+historical_file = Path(f"data/{selected_lake}_monthly_ndwi.csv")
 
-# Visualization
-vis = {
-    "min": -1,
-    "max": 1,
-    "palette": [
-        "brown",
-        "yellow",
-        "green",
-        "cyan",
-        "blue"
-    ]
-}
+forecast_file = Path(f"data/{selected_lake}_forecast.csv")
 
-# Create map
-m = folium.Map(
-    location=[-0.77, 36.36],
-    zoom_start=11
+historical = pd.read_csv(historical_file)
+
+forecast = pd.read_csv(forecast_file)
+
+# -------------------------
+# Create Date Columns
+# -------------------------
+historical["Date"] = pd.to_datetime(
+    historical["Year"].astype(str) + "-" +
+    historical["Month"].astype(str) + "-01"
 )
 
-# Add NDWI layer
-map_id = ndwi.getMapId(vis)
+forecast["Date"] = pd.to_datetime(
+    forecast["Year"].astype(str) + "-" +
+    forecast["Month"].astype(str) + "-01"
+)
 
-folium.TileLayer(
-    tiles=map_id["tile_fetcher"].url_format,
-    attr="Google Earth Engine",
-    name="NDWI"
-).add_to(m)
+# -------------------------
+# Plot
+# -------------------------
+fig, ax = plt.subplots(figsize=(14, 6))
 
-folium.LayerControl().add_to(m)
+ax.plot(
+    historical["Date"],
+    historical["Average_NDWI"],
+    linewidth=2,
+    marker="o",
+    label="Historical"
+)
 
-st_folium(m, width=1200, height=700)
+ax.plot(
+    forecast["Date"],
+    forecast["Predicted_NDWI"],
+    linestyle="--",
+    linewidth=2,
+    marker="x",
+    label="AI Forecast"
+)
+
+ax.set_title(selected_lake)
+
+ax.set_ylabel("Average NDWI")
+
+ax.grid(True)
+
+ax.legend()
+
+st.pyplot(fig)
+
+# -------------------------
+# Metrics
+# -------------------------
+latest = historical.iloc[-1]["Average_NDWI"]
+
+forecast_latest = forecast.iloc[-1]["Predicted_NDWI"]
+
+col1, col2 = st.columns(2)
+
+with col1:
+
+    st.metric(
+        "Latest Observed NDWI",
+        round(latest, 3)
+    )
+
+with col2:
+
+    st.metric(
+        "Forecast NDWI (Dec 2027)",
+        round(forecast_latest, 3)
+    )
+
+# -------------------------
+# AI Risk Assessment
+# -------------------------
+st.markdown("---")
+
+st.header("🤖 AI Assessment")
+
+if forecast_latest > 0.45:
+
+    st.success(
+        "🟢 High water availability predicted through 2027."
+    )
+
+elif forecast_latest > 0.25:
+
+    st.warning(
+        "🟡 Moderate water levels predicted."
+    )
+
+else:
+
+    st.error(
+        "🔴 Low water levels predicted. Continued monitoring is recommended."
+    )
+
+# -------------------------
+# Tables
+# -------------------------
+st.markdown("---")
+
+st.subheader("Historical Data")
+
+st.dataframe(historical)
+
+st.subheader("Forecast Data")
+
+st.dataframe(forecast)
